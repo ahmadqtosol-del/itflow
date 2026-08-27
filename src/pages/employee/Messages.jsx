@@ -562,14 +562,17 @@ export default function Messages() {
           String(persisted.id),
         );
 
-        setMessages((previous) =>
-          previous.map((message) =>
-            message.id === optimisticId
-              ? persisted
-              : message,
-          ),
-        );
-
+                setMessages((previous) => {
+          const withoutOptimisticOrDuplicate = previous.filter(
+            (message) =>
+              message.id !== optimisticId &&
+              message.id !== persisted.id,
+          );
+          return [
+            ...withoutOptimisticOrDuplicate,
+            persisted,
+          ];
+        });
         messageService
           .listConversations()
           .then((all) => {
