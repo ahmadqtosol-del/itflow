@@ -11,14 +11,14 @@ from app.db.session import Base, engine
 logging.basicConfig(level=logging.INFO)
 settings = get_settings()
 
-# Dev/demo convenience: auto-create tables on boot. For production,
-# manage schema changes with Alembic instead (see migrations/).
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title=settings.app_name)
 
 app.add_middleware(
     CORSMiddleware,
+
+    # Exact production domain + local development
     allow_origins=[
         "https://itflow-9p6.pages.dev",
         "http://localhost:5173",
@@ -26,20 +26,37 @@ app.add_middleware(
         "http://localhost:5174",
         "http://127.0.0.1:5174",
     ],
+
+    # Allow Cloudflare Pages preview deployments such as:
+    # https://2de31b7a.itflow-9p6.pages.dev
+    allow_origin_regex=r"https://[a-zA-Z0-9-]+\.itflow-9p6\.pages\.dev",
+
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-app.include_router(api_router, prefix=settings.api_v1_prefix)
-app.include_router(websocket_router)  # exposed at /ws (no version prefix, matches frontend config.ws.url)
+app.include_router(
+    api_router,
+    prefix=settings.api_v1_prefix,
+)
+
+app.include_router(
+    websocket_router
+)
 
 
 @app.get("/")
 def root():
-    return {"name": settings.app_name, "status": "ok", "docs": "/docs"}
+    return {
+        "name": settings.app_name,
+        "status": "ok",
+        "docs": "/docs",
+    }
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok"
+    }
