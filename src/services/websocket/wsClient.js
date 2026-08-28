@@ -37,6 +37,9 @@ class WebSocketClient {
       return;
     }
 
+    /*
+     * Prevent multiple simultaneous connection attempts.
+     */
     if (this.connecting) {
       return;
     }
@@ -49,11 +52,15 @@ class WebSocketClient {
     try {
       const socket = new WebSocket(config.ws.url);
 
+      /*
+       * This socket becomes the active socket.
+       */
       this.socket = socket;
 
       socket.onopen = () => {
         /*
-         * Make sure this is still the active socket.
+         * Ignore a socket that has already been replaced
+         * by another connection.
          */
         if (this.socket !== socket) {
           socket.close();
@@ -71,6 +78,19 @@ class WebSocketClient {
       };
 
       socket.onmessage = (event) => {
+        /*
+         * IMPORTANT:
+         *
+         * Ignore messages coming from an old/stale socket.
+         *
+         * If a reconnect creates Socket B while Socket A
+         * is still alive, Socket A must not emit the same
+         * message again.
+         */
+        if (this.socket !== socket) {
+          return;
+        }
+
         try {
           const data = JSON.parse(event.data);
 
@@ -81,7 +101,7 @@ class WebSocketClient {
           this._emit(data.event, data.payload);
         } catch {
           /*
-           * Ignore non-JSON websocket messages.
+           * Ignore non-JSON WebSocket messages.
            */
           console.debug(
             'WS non-JSON payload:',
@@ -91,19 +111,29 @@ class WebSocketClient {
       };
 
       socket.onerror = (error) => {
-        console.warn('WebSocket error:', error);
+        /*
+         * Only report errors for the currently active socket.
+         */
+        if (this.socket !== socket) {
+          return;
+        }
+
+        console.warn(
+          'WebSocket error:',
+          error,
+        );
       };
 
       socket.onclose = () => {
-        this.connecting = false;
-
         /*
-         * Do not let an old socket change the state
-         * of a newer socket.
+         * Ignore close events from stale sockets.
          */
-        if (this.socket === socket) {
-          this.socket = null;
+        if (this.socket !== socket) {
+          return;
         }
+
+        this.connecting = false;
+        this.socket = null;
 
         this._setStatus('OFFLINE');
 
@@ -113,6 +143,14 @@ class WebSocketClient {
       };
     } catch (error) {
       this.connecting = false;
+
+      /*
+       * Only clear the active socket if this failed
+       * connection is still the active one.
+       */
+      if (this.socket === socket) {
+        this.socket = null;
+      }
 
       console.warn(
         'WebSocket connection failed:',
@@ -157,12 +195,14 @@ class WebSocketClient {
     }
 
     const socket = this.socket;
+
     this.socket = null;
 
     if (socket) {
       /*
-       * Prevent its onclose handler from scheduling
-       * another reconnect.
+       * Because this.socket has already been set to null,
+       * its onclose handler will recognize the socket as stale
+       * and will not schedule another reconnect.
        */
       socket.close();
     }
@@ -181,13 +221,12 @@ class WebSocketClient {
 
     const handlers = this.listeners.get(event);
 
+    /*
+     * Set prevents the exact same handler from being
+     * registered more than once.
+     */
     handlers.add(handler);
 
-    /*
-     * Important:
-     * calling the same handler twice does not create
-     * duplicate registrations because Set is used.
-     */
     return () => {
       handlers.delete(handler);
 
@@ -205,7 +244,7 @@ class WebSocketClient {
     this.statusListeners.add(handler);
 
     /*
-     * Immediately report current status.
+     * Immediately report the current status.
      */
     handler(this.status);
 
@@ -222,8 +261,8 @@ class WebSocketClient {
     }
 
     /*
-     * Snapshot prevents problems if a listener unsubscribes
-     * itself while handling the event.
+     * Snapshot the handlers so listeners can safely
+     * unsubscribe while handling an event.
      */
     [...handlers].forEach((handler) => {
       try {

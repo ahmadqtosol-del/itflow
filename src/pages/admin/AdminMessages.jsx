@@ -486,94 +486,130 @@ export default function AdminMessages() {
   /* ---------------------------------------------------------------------- */
 
   const handleSend = useCallback(
-    async (text) => {
-      const value = text?.trim();
+  async (text) => {
+    const value = text?.trim();
 
-      if (
-        !activeId ||
-        !value ||
-        sending ||
-        !user?.id
-      ) {
-        return;
+    if (
+      !activeId ||
+      !value ||
+      sending ||
+      !user?.id
+    ) {
+      return;
+    }
+
+    const optimisticId = `opt-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2)}`;
+
+    const optimisticMessage = {
+      id: optimisticId,
+      conversationId: activeId,
+      senderId: user.id,
+      senderName: user.name,
+      body: value,
+      read: true,
+      createdAt: new Date().toISOString(),
+      optimistic: true,
+    };
+
+    /*
+     * Show the message immediately.
+     */
+    setMessages((previous) => [
+      ...previous,
+      optimisticMessage,
+    ]);
+
+    setSending(true);
+
+    try {
+      const persisted =
+        await messageService.send(
+          activeId,
+          value,
+        );
+
+      if (!persisted?.id) {
+        throw new Error(
+          'The server returned an invalid message.',
+        );
       }
 
-      const optimisticId = `opt-${Date.now()}-${Math.random()
-        .toString(36)
-        .slice(2)}`;
+      const persistedId = String(persisted.id);
 
-      const optimisticMessage = {
-        id: optimisticId,
-        conversationId: activeId,
-        senderId: user.id,
-        senderName: user.name,
-        body: value,
-        read: true,
-        createdAt: new Date().toISOString(),
-      };
+      /*
+       * Mark the real server ID as known.
+       */
+      messageIds.current.add(persistedId);
 
-      setMessages((previous) => [
-        ...previous,
-        optimisticMessage,
-      ]);
-
-      setSending(true);
-
-      try {
-        const persisted =
-          await messageService.send(
-            activeId,
-            value,
+      /*
+       * IMPORTANT:
+       *
+       * The WebSocket may already have delivered this
+       * message before the API response arrived.
+       *
+       * Therefore:
+       * - remove the optimistic copy
+       * - keep the real persisted/WebSocket copy if it exists
+       * - otherwise replace the optimistic copy
+       */
+      setMessages((previous) => {
+        const websocketMessageExists =
+          previous.some(
+            (message) =>
+              String(message.id) === persistedId,
           );
 
-        if (!persisted?.id) {
-          throw new Error(
-            'The server returned an invalid message.',
+        if (websocketMessageExists) {
+          return previous.filter(
+            (message) =>
+              message.id !== optimisticId,
           );
         }
 
-        messageIds.current.add(
-          String(persisted.id),
+        return previous.map((message) =>
+          message.id === optimisticId
+            ? persisted
+            : message,
         );
+      });
 
-        setMessages((previous) =>
-          previous.map((message) =>
-            message.id === optimisticId
-              ? persisted
-              : message,
-          ),
-        );
+      /*
+       * Refresh conversation sidebar.
+       */
+      messageService
+        .listConversations()
+        .then((all) => {
+          setConversations(
+            Array.isArray(all) ? all : [],
+          );
+        })
+        .catch(() => {});
+    } catch (error) {
+      /*
+       * Remove optimistic message if sending failed.
+       */
+      setMessages((previous) =>
+        previous.filter(
+          (message) =>
+            message.id !== optimisticId,
+        ),
+      );
 
-        messageService
-          .listConversations()
-          .then((all) => {
-            setConversations(
-              Array.isArray(all) ? all : [],
-            );
-          })
-          .catch(() => {});
-      } catch (error) {
-        setMessages((previous) =>
-          previous.filter(
-            (message) =>
-              message.id !== optimisticId,
-          ),
-        );
-
-        pushToast({
-          type: 'error',
-          title: 'Message not sent',
-          message:
-            error?.message ||
-            'Unable to send the message.',
-        });
-      } finally {
-        setSending(false);
-      }
-    },
-    [activeId, sending, user, pushToast],
-  );
-
+      pushToast({
+        type: 'error',
+        title: 'Message not sent',
+        message:
+          error?.message ||
+          'Unable to send the message.',
+      });
+    } finally {
+      setSending(false);
+    }
+  },
+  [activeId, sending, user, pushToast],
+);
   /* ---------------------------------------------------------------------- */
   /* New conversation                                                       */
   /* ---------------------------------------------------------------------- */
