@@ -1,4 +1,5 @@
 import { Outlet, useLocation } from 'react-router-dom';
+
 import Sidebar from '../components/layout/Sidebar';
 import Header from '../components/layout/Header';
 import Background from '../components/common/Background';
@@ -19,18 +20,31 @@ const TITLES = {
 
 export default function EmployeeLayout() {
   const { pathname } = useLocation();
-  const title = pathname.startsWith('/employee/problems/') ? 'Issue Details' : TITLES[pathname] || 'QTOSOL';
+
+  const title = pathname.startsWith(
+    '/employee/problems/'
+  )
+    ? 'Issue Details'
+    : TITLES[pathname] || 'QTOSOL';
 
   return (
-    <div className="flex min-h-screen">
+    <div className="relative flex min-h-screen">
       <Background />
+
       <Sidebar role="employee" />
-      <div className="flex min-h-screen flex-1 flex-col">
-        <Header title={title} breadcrumb="Employee" role="employee" />
-        <main className="flex-1 px-5 py-6">
+
+      <div className="flex min-h-screen min-w-0 flex-1 flex-col">
+        <Header
+          title={title}
+          breadcrumb="Employee"
+          role="employee"
+        />
+
+        <main className="relative flex-1 px-4 py-6 sm:px-5 lg:px-7">
           <Outlet />
         </main>
       </div>
+
       <GlobalSearch />
       <QuickCreateModal />
       <ToastContainer />

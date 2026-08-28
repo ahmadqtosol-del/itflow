@@ -1,13 +1,32 @@
 import { NavLink } from 'react-router-dom';
+
 import {
-  Home, ClipboardList, PlusCircle, Kanban as KanbanIcon, CheckCircle2, MessageSquare, Bell,
-  LayoutDashboard, ListChecks, Users, Wrench, BarChart3, FileText, ShieldCheck,
-  Settings, HelpCircle, LogOut, ChevronsLeft, ChevronsRight,
+  Home,
+  ClipboardList,
+  PlusCircle,
+  Kanban as KanbanIcon,
+  CheckCircle2,
+  MessageSquare,
+  Bell,
+  LayoutDashboard,
+  ListChecks,
+  Users,
+  Wrench,
+  BarChart3,
+  FileText,
+  ShieldCheck,
+  Settings,
+  HelpCircle,
+  LogOut,
+  ChevronsLeft,
+  ChevronsRight,
 } from 'lucide-react';
+
 import UserAvatar from '../common/UserAvatar';
 import { useUiStore } from '../../store/uiStore';
 import { useAuthStore } from '../../store/authStore';
 import { cn } from '../../utils/cn';
+
 
 const EMPLOYEE_NAV = [
   { to: '/employee', label: 'Home', icon: Home, end: true },
@@ -18,6 +37,7 @@ const EMPLOYEE_NAV = [
   { to: '/employee/messages', label: 'Messages', icon: MessageSquare },
   { to: '/employee/notifications', label: 'Notifications', icon: Bell },
 ];
+
 
 const ADMIN_NAV = [
   { to: '/admin', label: 'Dashboard', icon: LayoutDashboard, end: true },
@@ -34,118 +54,331 @@ const ADMIN_NAV = [
   { to: '/admin/audit', label: 'Audit Logs', icon: ShieldCheck },
 ];
 
+
 function Logo({ collapsed }) {
   return (
-    <div className="flex items-center gap-2.5 px-1">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="shrink-0">
-        <rect width="28" height="28" rx="8" fill="url(#itflow-grad)" />
-        <path d="M9 14.5L12.2 17.7L19 10.5" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-        <defs>
-          <linearGradient id="itflow-grad" x1="0" y1="0" x2="28" y2="28" gradientUnits="userSpaceOnUse">
-            <stop stopColor="#3B82F6" />
-            <stop offset="1" stopColor="#22D3EE" />
-          </linearGradient>
-        </defs>
-      </svg>
-      {!collapsed && <span className="text-base font-semibold tracking-tight" style={{ color: 'var(--text-primary)' }}>QTOSOL</span>}
+    <div className="flex items-center gap-3 px-1">
+      <div
+        className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl"
+        style={{
+          background:
+            'linear-gradient(135deg, var(--accent), var(--accent-purple) 55%, var(--accent-2))',
+
+          boxShadow:
+            '0 8px 25px rgba(59,130,246,0.25), inset 0 1px 0 rgba(255,255,255,0.28)',
+        }}
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 28 28"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M8.5 14.5L12.2 18.2L20 9.5"
+            stroke="white"
+            strokeWidth="2.4"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
+      </div>
+
+      {!collapsed && (
+        <div className="min-w-0">
+          <p
+            className="text-[15px] font-bold tracking-[0.18em]"
+            style={{ color: 'var(--text-primary)' }}
+          >
+            QTOSOL
+          </p>
+
+          <p
+            className="text-[9px] uppercase tracking-[0.22em]"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            ITFlow
+          </p>
+        </div>
+      )}
     </div>
   );
 }
+
 
 function NavItem({ item, collapsed }) {
   return (
     <NavLink
       to={item.to}
       end={item.end}
+      title={collapsed ? item.label : undefined}
       className={({ isActive }) =>
         cn(
-          'focus-ring group relative flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-sm transition-colors',
+          'group relative flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-all duration-200',
           isActive ? 'font-medium' : 'font-normal'
         )
       }
       style={({ isActive }) => ({
-        color: isActive ? 'var(--text-primary)' : 'var(--text-secondary)',
-        background: isActive ? 'var(--accent-soft)' : 'transparent',
+        color: isActive
+          ? 'var(--text-primary)'
+          : 'var(--text-secondary)',
+
+        background: isActive
+          ? 'linear-gradient(90deg, var(--accent-soft), transparent)'
+          : 'transparent',
+
+        boxShadow: isActive
+          ? 'inset 0 0 0 1px rgba(59,130,246,0.12), 0 6px 20px var(--glow-primary)'
+          : 'none',
       })}
-      title={collapsed ? item.label : undefined}
     >
-      <item.icon size={17} className="shrink-0" />
-      {!collapsed && <span className="truncate">{item.label}</span>}
-      {collapsed && (
-        <span
-          className="pointer-events-none absolute left-full ml-2 whitespace-nowrap rounded-[var(--radius-sm)] px-2 py-1 text-xs opacity-0 shadow-lg transition-opacity group-hover:opacity-100"
-          style={{ background: 'var(--bg-elevated)', color: 'var(--text-primary)', zIndex: 50 }}
-        >
-          {item.label}
-        </span>
+      {({ isActive }) => (
+        <>
+          {isActive && (
+            <span
+              className="absolute left-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full"
+              style={{
+                background:
+                  'linear-gradient(180deg, var(--accent), var(--accent-2))',
+
+                boxShadow:
+                  '0 0 12px rgba(59,130,246,0.7)',
+              }}
+            />
+          )}
+
+          <item.icon
+            size={17}
+            strokeWidth={isActive ? 2.2 : 1.8}
+            className="shrink-0"
+          />
+
+          {!collapsed && (
+            <span className="truncate">
+              {item.label}
+            </span>
+          )}
+
+          {collapsed && (
+            <span
+              className="pointer-events-none absolute left-full ml-3 whitespace-nowrap rounded-lg border px-2.5 py-1.5 text-xs opacity-0 shadow-xl transition-opacity group-hover:opacity-100"
+              style={{
+                background: 'var(--glass-bg-strong)',
+                borderColor: 'var(--glass-border-strong)',
+                color: 'var(--text-primary)',
+                backdropFilter: 'blur(18px)',
+                WebkitBackdropFilter: 'blur(18px)',
+                zIndex: 50,
+              }}
+            >
+              {item.label}
+            </span>
+          )}
+        </>
       )}
     </NavLink>
   );
 }
 
+
 export default function Sidebar({ role }) {
   const collapsed = useUiStore((s) => s.sidebarCollapsed);
   const toggleSidebar = useUiStore((s) => s.toggleSidebar);
+
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
-  const nav = role === 'admin' ? ADMIN_NAV : EMPLOYEE_NAV;
+
+  const nav =
+    role === 'admin'
+      ? ADMIN_NAV
+      : EMPLOYEE_NAV;
 
   return (
     <aside
       className={cn(
-        'sticky top-0 flex h-screen shrink-0 flex-col border-r transition-[width] duration-200',
-        collapsed ? 'w-[72px]' : 'w-64'
+        'sticky top-0 z-40 flex h-screen shrink-0 flex-col border-r transition-[width] duration-300',
+        collapsed ? 'w-[76px]' : 'w-[258px]'
       )}
-      style={{ background: 'var(--bg-surface-2)', borderColor: 'var(--border)' }}
+      style={{
+        background: 'var(--glass-bg-strong)',
+        borderColor: 'var(--glass-border)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        boxShadow: '10px 0 40px rgba(15,23,42,0.08)',
+      }}
     >
-      <div className="flex items-center justify-between px-3 py-4">
+      {/* Logo */}
+      <div className="flex items-center justify-between px-4 py-5">
         <Logo collapsed={collapsed} />
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-2.5">
+      {/* Navigation */}
+      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-2">
+        {!collapsed && (
+          <p
+            className="mb-2 px-3 text-[9px] font-semibold uppercase tracking-[0.18em]"
+            style={{ color: 'var(--text-muted)' }}
+          >
+            Workspace
+          </p>
+        )}
+
         {nav.map((item) => (
-          <NavItem key={item.to} item={item} collapsed={collapsed} />
+          <NavItem
+            key={item.to}
+            item={item}
+            collapsed={collapsed}
+          />
         ))}
       </nav>
 
-      <div className="space-y-1 border-t px-2.5 py-3" style={{ borderColor: 'var(--border)' }}>
-        <NavItem item={{ to: `/${role}/settings`, label: 'Settings', icon: Settings }} collapsed={collapsed} />
+      {/* Bottom */}
+      <div
+        className="space-y-1 border-t px-3 py-4"
+        style={{
+          borderColor: 'var(--glass-border)',
+        }}
+      >
+        <NavItem
+          item={{
+            to: `/${role}/settings`,
+            label: 'Settings',
+            icon: Settings,
+          }}
+          collapsed={collapsed}
+        />
+
         <a
           href="#"
           onClick={(e) => e.preventDefault()}
-          className="focus-ring flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2 text-sm"
-          style={{ color: 'var(--text-secondary)' }}
+          className="focus-ring flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm transition-colors"
+          style={{
+            color: 'var(--text-secondary)',
+          }}
         >
-          <HelpCircle size={17} />
-          {!collapsed && <span>Help</span>}
+          
+
+        
         </a>
 
-        <div className="my-2 h-px" style={{ background: 'var(--border)' }} />
+        <div
+          className="my-3 h-px"
+          style={{
+            background:
+              'linear-gradient(90deg, transparent, var(--glass-border), transparent)',
+          }}
+        />
 
-        <div className={cn('flex items-center gap-2.5 rounded-[var(--radius-md)] px-1.5 py-1.5', !collapsed && 'justify-between')}>
-          <div className="flex items-center gap-2.5 overflow-hidden">
-            <UserAvatar name={user.name} color={user.avatarColor} status="Available" size="sm" />
+        {/* User */}
+        <div
+          className={cn(
+            'flex items-center gap-2.5 rounded-xl px-2 py-2',
+            !collapsed && 'justify-between'
+          )}
+          style={{
+            background: collapsed
+              ? 'transparent'
+              : 'var(--glass-bg-soft)',
+
+            borderColor: collapsed
+              ? 'transparent'
+              : 'var(--glass-border)',
+
+            borderWidth: 1,
+          }}
+        >
+          <div className="flex min-w-0 items-center gap-2.5">
+            <UserAvatar
+              name={user?.name || 'User'}
+              color={user?.avatarColor}
+              status="Available"
+              size="sm"
+            />
+
             {!collapsed && (
               <div className="min-w-0">
-                <p className="truncate text-xs font-medium" style={{ color: 'var(--text-primary)' }}>{user.name}</p>
-                <p className="truncate text-[11px]" style={{ color: 'var(--text-muted)' }}>{user.department}</p>
+                <p
+                  className="truncate text-xs font-semibold"
+                  style={{
+                    color: 'var(--text-primary)',
+                  }}
+                >
+                  {user?.name || 'User'}
+                </p>
+
+                <p
+                  className="truncate text-[10px]"
+                  style={{
+                    color: 'var(--text-muted)',
+                  }}
+                >
+                  {user?.department || 'IT'}
+                </p>
               </div>
             )}
           </div>
+
           {!collapsed && (
-            <button onClick={logout} className="focus-ring rounded-[var(--radius-sm)] p-1.5" style={{ color: 'var(--text-muted)' }} aria-label="Log out" title="Log out">
+            <button
+              onClick={logout}
+              className="focus-ring rounded-lg p-1.5 transition-colors"
+              style={{
+                color: 'var(--text-muted)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background =
+                  'var(--accent-soft)';
+                e.currentTarget.style.color =
+                  'var(--text-primary)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background =
+                  'transparent';
+                e.currentTarget.style.color =
+                  'var(--text-muted)';
+              }}
+              aria-label="Log out"
+              title="Log out"
+            >
               <LogOut size={15} />
             </button>
           )}
         </div>
 
+        {/* Collapse */}
         <button
           onClick={toggleSidebar}
-          className="focus-ring mt-1 flex w-full items-center justify-center gap-2 rounded-[var(--radius-md)] py-1.5 text-xs"
-          style={{ color: 'var(--text-muted)' }}
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+          className="focus-ring mt-2 flex w-full items-center justify-center gap-2 rounded-xl py-2 text-xs transition-colors"
+          style={{
+            color: 'var(--text-muted)',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background =
+              'var(--glass-bg-hover)';
+            e.currentTarget.style.color =
+              'var(--text-secondary)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background =
+              'transparent';
+            e.currentTarget.style.color =
+              'var(--text-muted)';
+          }}
+          aria-label={
+            collapsed
+              ? 'Expand sidebar'
+              : 'Collapse sidebar'
+          }
         >
-          {collapsed ? <ChevronsRight size={15} /> : <ChevronsLeft size={15} />}
+          {collapsed ? (
+            <ChevronsRight size={15} />
+          ) : (
+            <>
+              <ChevronsLeft size={15} />
+              <span>Collapse</span>
+            </>
+          )}
         </button>
       </div>
     </aside>
